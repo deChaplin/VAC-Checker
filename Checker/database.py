@@ -10,8 +10,10 @@ def create_database():
     c.execute("""CREATE TABLE IF NOT EXISTS accounts (
         steam_id text PRIMARY KEY,
         steam_name text,
-        steam_status text,
-        steam_vac text
+        game_bans text,
+        num_game_bans text,
+        steam_vac text,
+        num_vac_bans text
     )""")
     # commit our command
     conn.commit()
@@ -19,11 +21,39 @@ def create_database():
     conn.close()
 
 # add a steam account to the database
-def add_account(steam_id, steam_name, steam_status, steam_vac):
+def add_account(steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans):
+
+    if check_account(steam_id):
+        update_status(steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans)
+    else:
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        # Create a table
+        c.execute("INSERT INTO accounts VALUES (?, ?, ?, ?, ?, ?)", (steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans))
+        conn.commit()
+        conn.close()
+
+# Check if steam account is in the database
+def check_account(steam_id):
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     # Create a table
-    c.execute("INSERT INTO accounts VALUES (?, ?, ?, ?)", (steam_id, steam_name, steam_status, steam_vac))
+    c.execute("SELECT steam_id FROM accounts WHERE steam_id=?", (steam_id,))
+    row = c.fetchone()
+    conn.close()
+
+    if row:
+        return True
+    else:
+        return False
+
+# Update the status of a steam account
+def update_status(steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    # Create a table
+    c.execute("UPDATE accounts SET steam_name=?, game_bans=?, num_game_bans=?, steam_vac=?, num_vac_bans=? "
+              "WHERE steam_id=?", (steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans, steam_id))
     conn.commit()
     conn.close()
 
@@ -62,11 +92,11 @@ def get_vac_status(steam_id):
     else:
         return None
 
-def get_game_status(steam_id):
+def get_game_bans(steam_id):
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     # Create a table
-    c.execute("SELECT steam_status FROM users WHERE steam_id=?", (steam_id,))
+    c.execute("SELECT game_bans FROM users WHERE steam_id=?", (steam_id,))
     row = c.fetchone()
     conn.close()
 
