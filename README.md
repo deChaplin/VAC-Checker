@@ -4,8 +4,8 @@ Sending !status <steamID> in a server the bot is in will return some stats for t
 ![image](https://github.com/deChaplin/VAC-Checker/assets/85872356/f3de5859-72b4-47b3-aa88-1c70d7317312)
 
 Create a .env file inside the Bot folder. This will contain your discord token and steam api key.  
-  "TOKEN=12345.123.12345
-  KEY=12345"
+  "TOKEN=12345.123.12345"
+  "KEY=12345"
   
 TO DO:
   
