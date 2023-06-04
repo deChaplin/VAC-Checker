@@ -129,6 +129,21 @@ async def checkPrefix(ctx):
     await ctx.send(f"Current prefix is {prefix}")
 
 
+# Help command
+@client.command()
+async def help(ctx):
+    embed = create_embed("VAC Checker Help", "Commands for the VAC Checker Bot", get_random_colour(), [
+        ("status <steamID>", "Check the status of a specific account", True),
+        ("add <steamID>", "Add a steam account to the database", True),
+        ("remove <steamID>", "Remove a steam account from the database", True),
+
+        ("setPrefix", "Change the prefix for the server", True),
+        ("checkPrefix", "Shows current prefix for the server", True),
+        ("help", "Shows this help menu", True),
+    ])
+
+    await ctx.send(embed=embed)
+
 # ======================================================================================================================
 # VAC Checker Commands
 # ======================================================================================================================
@@ -138,15 +153,22 @@ async def checkPrefix(ctx):
 @client.command()
 async def status(ctx, steam_id):
     try:
-        steamID, name, game_banned, game_bans, vac_banned, vac_bans = vacChecker.check_vac(KEY, steam_id, ctx.message.author.id)
+        steamID, name, game_banned, game_bans, vac_banned, vac_bans, last_ban = \
+            vacChecker.check_vac(KEY, steam_id, ctx.message.author.id)
 
-        embed = create_embed("Profile Status", "The current status of " + name, get_random_colour(), [
+        if game_banned == "Yes" or vac_banned == "Yes":
+            color = 0xFF0000
+        else:
+            color = 0x44ff00
+
+        embed = create_embed("Profile Status", "The current status of " + name, color, [
             ("Name - ", name, False),
             ("Steam ID - ", steamID, False),
             ("Game Banned - ", game_banned, False),
             ("Game Bans - ", game_bans, False),
             ("VAC Banned - ", vac_banned, False),
-            ("VAC Bans - ", vac_bans, False)
+            ("VAC Bans - ", vac_bans, False),
+            ("Last Ban - ", get_days_since_ban(last_ban), False)
         ])
 
         await ctx.send(embed=embed)
@@ -167,52 +189,10 @@ async def add(ctx, steam_id):
 # Command to remove a steam account from the database
 @client.command()
 async def remove(ctx, steam_id):
-    await ctx.send("This command is not yet implemented!")
-
-
-# Help command
-@client.command()
-async def help(ctx):
-    embed = create_embed("VAC Checker Help", "Commands for the VAC Checker Bot", get_random_colour(), [
-        ("status <steamID>", "Check the status of a specific account", True),
-        ("add <steamID>", "Add a steam account to the database", True),
-        ("remove <steamID>", "Remove a steam account from the database", True),
-
-        ("setPrefix", "Change the prefix for the server", True),
-        ("checkPrefix", "Shows current prefix for the server", True),
-        ("help", "Shows this help menu", True),
-    ])
-
-    await ctx.send(embed=embed)
-
-
-def create_embed(title, description, colour, fields):
-
-        embed = discord.Embed(
-            title=title,
-            description=description,
-            color=colour
-        )
-
-        for field in fields:
-            embed.add_field(name=field[0], value=field[1], inline=field[2])
-
-        #embed.add_field(name='\u200b', value='----------------------------------------------------------------------', inline=False)
-        embed.set_footer(text="Developed by de_Chaplin", icon_url="https://avatars.githubusercontent.com/u/85872356?v=4")
-
-        return embed
-
-
-def get_guilds():
-    try:
-        guilds = guild_database.get_num_guilds()
-        if guilds >= 1:
-            return guilds
-        else:
-            return "0"
-    except:
-        print ("Error getting guilds")
-        return "0"
+    if vacChecker.remove_account(steam_id, ctx.message.author.id):
+        await ctx.send("Account removed from database!")
+    else:
+        await ctx.send("Only the person who added the account can remove it!")
 
 
 # ======================================================================================================================
@@ -222,10 +202,11 @@ def get_guilds():
 
 @tasks.loop(seconds=1)
 async def change_status():
-    status2 = ["your steam accounts!", " who gets banned!", " you 👀", " people get banned",
+    status = ["your steam accounts!", " who gets banned!", " you 👀", " people get banned",
                str(get_guilds()) + " servers!"]
 
-    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=(random.choice(status2))))
+    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching,
+                                                           name=(random.choice(status))))
     await asyncio.sleep(3)
 
 
@@ -238,33 +219,32 @@ async def check_vac():
     # send private message to user
 
     # Will run for the number of unique discord ids in the database
-
     discord_ids = vacChecker.get_discord_id()
 
     if discord_ids:
-        for row in discord_ids:
-            user = client.get_user(int(row[0]))
-            if user is not None:
-                msg = vacChecker.check_all(KEY, str(row[0]))
-                if msg is not None:
+        for index, id in enumerate(discord_ids):
+            user = client.get_user(int(id))
 
-                    steamID, name, game_banned, game_bans, vac_banned, vac_bans = vacChecker.check_all(KEY, str(row[0]))
+            steam_ids = vacChecker.get_steam_id(int(id))
 
+            for s_index, s_id in enumerate(steam_ids):
+                steamID, name, game_banned, game_bans, vac_banned, vac_bans, last_ban = \
+                    vacChecker.check_vac(KEY, s_id, int(id))
+
+                if game_banned == "Yes" or vac_banned == "Yes":
                     embed = create_embed("Profile Status", "The current status of " + name,
                                          get_random_colour(), [
-                                             ("Name - ", name, False),
-                                             ("Steam ID - ", steamID, False),
-                                             ("Game Banned - ", game_banned, False),
-                                             ("Game Bans - ", game_bans, False),
-                                             ("VAC Banned - ", vac_banned, False),
-                                             ("VAC Bans - ", vac_bans, False)
+                                            ("Name - ", name, False),
+                                            ("Steam ID - ", steamID, False),
+                                            ("Game Banned - ", game_banned, False),
+                                            ("Game Bans - ", game_bans, False),
+                                            ("VAC Banned - ", vac_banned, False),
+                                            ("VAC Bans - ", vac_bans, False),
+                                            ("Last Ban - ", get_days_since_ban(last_ban), False)
                                          ])
-
                     await user.send(embed=embed)
-
-                    #await user.send(msg)
             else:
-                print(f"User with ID {str(row[0])} not found.")
+                print(f"User with ID {str(id)} not found.")
 
 
 # ======================================================================================================================
@@ -274,6 +254,41 @@ async def check_vac():
 # Function to randomly select a colour for the embed
 def get_random_colour():
     return random.choice(color_codes)
+
+
+# Take the days since last ban and return how many days ago it was
+def get_days_since_ban(days):
+    if days == 0:
+        return "Today"
+    elif days == 1:
+        return "Yesterday"
+    else:
+        return str(days) + " days ago"
+
+
+def create_embed(title, description, colour, fields):
+    embed = discord.Embed(
+        title=title,
+        description=description,
+        color=colour
+    )
+    for field in fields:
+        embed.add_field(name=field[0], value=field[1], inline=field[2])
+
+    embed.set_footer(text="Developed by de_Chaplin", icon_url="https://avatars.githubusercontent.com/u/85872356?v=4")
+    return embed
+
+
+def get_guilds():
+    try:
+        guilds = guild_database.get_num_guilds()
+        if guilds >= 1:
+            return guilds
+        else:
+            return "0"
+    except:
+        print ("Error getting guilds")
+        return "0"
 
 
 client.run(TOKEN)

@@ -138,6 +138,48 @@ def get_steamid_from_discord(discord_id):
         return None
 
 
+# Get discord_id from steam_id
+def get_discord_id(steam_id):
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    c.execute("SELECT discord_id FROM accounts WHERE steam_id=?", (steam_id,))
+    row = c.fetchone()
+    conn.close()
+
+    if row:
+        return row[0]
+    else:
+        return None
+
+
+# Get the number of accounts per discord_id
+def get_num_accounts():
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    c.execute("SELECT discord_id, COUNT(*) FROM accounts GROUP BY discord_id")
+    rows = c.fetchall()
+    conn.close()
+
+    if rows:
+        return rows
+    else:
+        return None
+
+
+# Get every unique discord_id
+def get_discord_id_list():
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    c.execute("SELECT DISTINCT discord_id FROM accounts")
+    rows = c.fetchall()
+    conn.close()
+
+    if rows:
+        return [i[0] for i in rows]
+    else:
+        return None
+
+
 # Get the number of different discord_id
 def get_num_discord_id():
     conn = sqlite3.connect(DATABASE)

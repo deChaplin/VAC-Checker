@@ -10,56 +10,25 @@ def start_up():
 
 
 def check_vac(KEY, account, discord_id):
-    steamID, name, game_banned, game_bans, vac_banned, vac_bans = format_api_response(KEY, account, api.getBannedStatus(KEY, account))
+    steamID, name, game_banned, game_bans, vac_banned, vac_bans, last_ban = \
+        format_api_response(KEY, account, api.getBannedStatus(KEY, account))
 
     # Add the account to the database
     database.add_account(steamID, name, game_banned, game_bans, vac_banned, vac_bans, discord_id)
 
-    message = ""
-    message += "---------------------------------------\n" + \
-                "Steam Name: " + name + "\n" + \
-                "Steam ID: " + steamID + "\n" + \
-                "Game Banned: " + game_banned + "\n" + \
-                "Number of Game Bans: " + game_bans + "\n" + \
-                "VAC Banned: " + vac_banned + "\n" + \
-                "Number of VAC Bans: " + vac_bans + "\n" + \
-                "---------------------------------------\n"
-
-
-    return steamID, name, game_banned, game_bans, vac_banned, vac_bans
-
-    #return message
+    return steamID, name, game_banned, game_bans, vac_banned, vac_bans, last_ban
 
 
 def get_discord_id():
     # Returns the number of discord IDs in the database
-    return database.get_num_discord_id()
-
-
-def check_all(KEY, discord_id):
-    accounts = database.get_steamid_from_discord(discord_id)
-    message = ""
-    for i in accounts:
-        steamID, name, game_banned, game_bans, vac_banned, vac_bans = format_api_response(KEY, i, api.getBannedStatus(KEY, i))
-
-        if game_banned == "Yes" or vac_banned == "Yes":
-            message += "---------------------------------------\n" + \
-            "Steam Name: " + name + "\n" + \
-            "Steam ID: " + steamID + "\n" + \
-            "Game Banned: " + game_banned + "\n" + \
-            "Number of Game Bans: " + game_bans + "\n" + \
-            "VAC Banned: " + vac_banned + "\n" + \
-            "Number of VAC Bans: " + vac_bans + "\n" + \
-            "---------------------------------------\n"
-
-            return steamID, name, game_banned, game_bans, vac_banned, vac_bans
-            #return message
-        else:
-            return None
+    discord_ids = database.get_discord_id_list()
+    return discord_ids
 
 
 def add_account(KEY, account, discord_id):
-    steamID, name, game_banned, game_bans, vac_banned, vac_bans = format_api_response(KEY, account, api.getBannedStatus(KEY, account))
+    steamID, name, game_banned, game_bans, vac_banned, vac_bans, last_ban = \
+        format_api_response(KEY, account, api.getBannedStatus(KEY, account))
+
     database.add_account(steamID, name, game_banned, game_bans, vac_banned, vac_bans, discord_id)
     return name
 
@@ -91,8 +60,19 @@ def format_api_response(KEY, account, response):
         else:
             vac_banned = "No"
 
-        return i.SteamId, name, game_banned, str(i.NumberOfGameBans), vac_banned, str(i.NumberOfVACBans)
+        return i.SteamId, name, game_banned, str(i.NumberOfGameBans), vac_banned, \
+            str(i.NumberOfVACBans), str(i.DaysSinceLastBan)
 
 
-def remove_account(steam_id):
-    database.remove_account(steam_id)
+def remove_account(steam_id, discord_id):
+    if str(discord_id) == str(database.get_discord_id(steam_id)):
+        database.remove_account(steam_id)
+        return True
+    else:
+        return False
+
+
+# Get the steamID from the database
+def get_steam_id(discord_id):
+    steam_id = database.get_steamid_from_discord(discord_id)
+    return steam_id
