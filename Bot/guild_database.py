@@ -2,6 +2,7 @@ import sqlite3
 
 DATABASE = 'guilds.db'
 
+
 def create_database():
     # Connect to the database
     conn = sqlite3.connect(DATABASE)
@@ -17,6 +18,7 @@ def create_database():
     # close our connection
     conn.close()
 
+
 # Add a guild id and prefix to the database
 def add_guild(guild_id, guild_prefix):
     conn = sqlite3.connect(DATABASE)
@@ -25,6 +27,17 @@ def add_guild(guild_id, guild_prefix):
     c.execute("INSERT INTO guilds VALUES (?, ?)", (guild_id, guild_prefix))
     conn.commit()
     conn.close()
+
+
+# Remove a guild from the database
+def remove_guild(guild_id):
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    # Create a table
+    c.execute("DELETE FROM guilds WHERE guild_id=?", (guild_id,))
+    conn.commit()
+    conn.close()
+
 
 # Check if guild is in the database
 def check_guild(guild_id):
@@ -40,23 +53,31 @@ def check_guild(guild_id):
     else:
         return False
 
+
 # Update the prefix of a guild
 def update_prefix(guild_id, guild_prefix):
+    if check_guild(guild_id):
+        conn = sqlite3.connect(DATABASE)
+        c = conn.cursor()
+        # Create a table
+        c.execute("UPDATE guilds SET guild_prefix=? WHERE guild_id=?", (guild_prefix, guild_id))
+        conn.commit()
+        conn.close()
+    else:
+        add_guild(guild_id, guild_prefix)
+
+
+# Get the prefix of a guild
+def get_prefix(guild_id):
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
     # Create a table
-    c.execute("UPDATE guilds SET guild_prefix=? WHERE guild_id=?", (guild_prefix, guild_id))
-    conn.commit()
+    c.execute("SELECT guild_prefix FROM guilds WHERE guild_id=?", (guild_id,))
+    row = c.fetchone()
     conn.close()
 
-# Remove a guild from the database
-def remove_guild(guild_id):
-    conn = sqlite3.connect(DATABASE)
-    c = conn.cursor()
-    # Create a table
-    c.execute("DELETE FROM guilds WHERE guild_id=?", (guild_id,))
-    conn.commit()
-    conn.close()
+    return row[0]
+
 
 # Get the number of guilds in the database
 def get_num_guilds():
