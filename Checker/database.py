@@ -1,9 +1,10 @@
 import sqlite3
 
+DATABASE = 'steam_accounts.db'
 
 def create_database():
     # Connect to the database
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect(DATABASE)
     # Create a cursor
     c = conn.cursor()
     # Create a table
@@ -26,7 +27,7 @@ def add_account(steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_v
     if check_account(steam_id):
         update_status(steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans)
     else:
-        conn = sqlite3.connect('database.db')
+        conn = sqlite3.connect(DATABASE)
         c = conn.cursor()
         # Create a table
         c.execute("INSERT INTO accounts VALUES (?, ?, ?, ?, ?, ?)", (steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans))
@@ -35,7 +36,7 @@ def add_account(steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_v
 
 # Check if steam account is in the database
 def check_account(steam_id):
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
     # Create a table
     c.execute("SELECT steam_id FROM accounts WHERE steam_id=?", (steam_id,))
@@ -49,7 +50,7 @@ def check_account(steam_id):
 
 # Update the status of a steam account
 def update_status(steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans):
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
     # Create a table
     c.execute("UPDATE accounts SET steam_name=?, game_bans=?, num_game_bans=?, steam_vac=?, num_vac_bans=? "
@@ -59,7 +60,7 @@ def update_status(steam_id, steam_name, game_bans, num_game_bans, steam_vac, num
 
 # remove a steam account from the database
 def remove_account(steam_id):
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
     # Create a table
     c.execute("DELETE FROM accounts WHERE steam_id=?", (steam_id,))
@@ -67,7 +68,7 @@ def remove_account(steam_id):
     conn.close()
 
 def get_steamid(steam_name):
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
     # Create a table
     c.execute("SELECT steam_id FROM users WHERE steam_name=?", (steam_name,))
@@ -80,7 +81,7 @@ def get_steamid(steam_name):
         return None
 
 def get_vac_status(steam_id):
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
     # Create a table
     c.execute("SELECT steam_vac FROM users WHERE steam_id=?", (steam_id,))
@@ -93,7 +94,7 @@ def get_vac_status(steam_id):
         return None
 
 def get_game_bans(steam_id):
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
     # Create a table
     c.execute("SELECT game_bans FROM users WHERE steam_id=?", (steam_id,))
