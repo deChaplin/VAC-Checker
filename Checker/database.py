@@ -32,7 +32,8 @@ def add_account(steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_v
     else:
         conn = sqlite3.connect(DATABASE)
         c = conn.cursor()
-        c.execute("INSERT INTO accounts VALUES (?, ?, ?, ?, ?, ?, ?)", (steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans, discord_id))
+        c.execute("INSERT INTO accounts VALUES (?, ?, ?, ?, ?, ?, ?)", (steam_id, steam_name, game_bans, num_game_bans,
+                                                                        steam_vac, num_vac_bans, discord_id))
         conn.commit()
         conn.close()
 
@@ -66,11 +67,11 @@ def get_accounts():
 
 
 # Update the status of a steam account
-def update_status(steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans):
+def update_status(steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans, discord_id):
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
-    c.execute("UPDATE accounts SET steam_name=?, game_bans=?, num_game_bans=?, steam_vac=?, num_vac_bans=? "
-              "WHERE steam_id=?", (steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans, steam_id))
+    c.execute("UPDATE accounts SET steam_name=?, game_bans=?, num_game_bans=?, steam_vac=?, num_vac_bans=?, discord_id=?"
+              "WHERE steam_id=?", (steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans, discord_id, steam_id))
     conn.commit()
     conn.close()
 

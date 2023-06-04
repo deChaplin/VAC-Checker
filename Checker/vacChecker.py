@@ -25,7 +25,10 @@ def check_vac(KEY, account, discord_id):
                 "Number of VAC Bans: " + vac_bans + "\n" + \
                 "---------------------------------------\n"
 
-    return message
+
+    return steamID, name, game_banned, game_bans, vac_banned, vac_bans
+
+    #return message
 
 
 def get_discord_id():
@@ -35,11 +38,8 @@ def get_discord_id():
 
 def check_all(KEY, discord_id):
     accounts = database.get_steamid_from_discord(discord_id)
-
-    print("Discord Id - " + discord_id)
     message = ""
     for i in accounts:
-        print("Steam Id - " + i)
         steamID, name, game_banned, game_bans, vac_banned, vac_bans = format_api_response(KEY, i, api.getBannedStatus(KEY, i))
 
         if game_banned == "Yes" or vac_banned == "Yes":
@@ -52,7 +52,8 @@ def check_all(KEY, discord_id):
             "Number of VAC Bans: " + vac_bans + "\n" + \
             "---------------------------------------\n"
 
-            return message
+            return steamID, name, game_banned, game_bans, vac_banned, vac_bans
+            #return message
         else:
             return None
 

@@ -34,6 +34,34 @@ KEY = os.getenv('KEY')
 # Remove the default help command
 client.remove_command('help')
 
+color_codes = [
+    0xFF0000,  # Red
+    0x00FF00,  # Green
+    0x0000FF,  # Blue
+    0xFFFF00,  # Yellow
+    0xFF00FF,  # Magenta
+    0x00FFFF,  # Cyan
+    0xFFA500,  # Orange
+    0x800080,  # Purple
+    0x008000,  # Dark Green
+    0x000080,  # Navy Blue
+    0x800000,  # Maroon
+    0x008080,  # Teal
+    0xFFC0CB,  # Pink
+    0xFFD700,  # Gold
+    0xA52A2A,  # Brown
+    0x800000,  # Dark Red
+    0x00FF7F,  # Spring Green
+    0x808000,  # Olive
+    0x008080,  # Teal
+    0x008000,  # Green
+    0x000080,  # Navy
+    0x0000FF,  # Blue
+    0xFF00FF,  # Magenta
+    0xFF0000,  # Red
+    0xFFA500   # Orange
+]
+
 
 # ======================================================================================================================
 # Standard Events
@@ -109,14 +137,31 @@ async def checkPrefix(ctx):
 # Command to check the status of a steam account
 @client.command()
 async def status(ctx, steam_id):
-    await ctx.send(vacChecker.check_vac(KEY, steam_id, ctx.message.author.id))
+    try:
+        steamID, name, game_banned, game_bans, vac_banned, vac_bans = vacChecker.check_vac(KEY, steam_id, ctx.message.author.id)
+
+        embed = create_embed("Profile Status", "The current status of " + name, get_random_colour(), [
+            ("Name - ", name, False),
+            ("Steam ID - ", steamID, False),
+            ("Game Banned - ", game_banned, False),
+            ("Game Bans - ", game_bans, False),
+            ("VAC Banned - ", vac_banned, False),
+            ("VAC Bans - ", vac_bans, False)
+        ])
+
+        await ctx.send(embed=embed)
+    except:
+        await ctx.send("Error checking account!")
 
 
 # Command to add a steam account to the database
 @client.command()
 async def add(ctx, steam_id):
-    name = vacChecker.add_account(KEY, steam_id, ctx.message.author.id)
-    await ctx.send(f"{name} added to database!")
+    try:
+        name = vacChecker.add_account(KEY, steam_id, ctx.message.author.id)
+        await ctx.send(f"{name} added to database!")
+    except:
+        await ctx.send("Error adding account to database!")
 
 
 # Command to remove a steam account from the database
@@ -128,11 +173,34 @@ async def remove(ctx, steam_id):
 # Help command
 @client.command()
 async def help(ctx):
-    await ctx.send("status <steamID> - check the status of a specific account\n"
-                   "check - check the VAC status of a your accounts\n"
-                   "add <steamID> - add a steam account to the database\n"
-                   "remove <steamID> - remove a steam account from the database\n"
-                   )
+    embed = create_embed("VAC Checker Help", "Commands for the VAC Checker Bot", get_random_colour(), [
+        ("status <steamID>", "Check the status of a specific account", True),
+        ("add <steamID>", "Add a steam account to the database", True),
+        ("remove <steamID>", "Remove a steam account from the database", True),
+
+        ("setPrefix", "Change the prefix for the server", True),
+        ("checkPrefix", "Shows current prefix for the server", True),
+        ("help", "Shows this help menu", True),
+    ])
+
+    await ctx.send(embed=embed)
+
+
+def create_embed(title, description, colour, fields):
+
+        embed = discord.Embed(
+            title=title,
+            description=description,
+            color=colour
+        )
+
+        for field in fields:
+            embed.add_field(name=field[0], value=field[1], inline=field[2])
+
+        #embed.add_field(name='\u200b', value='----------------------------------------------------------------------', inline=False)
+        embed.set_footer(text="Developed by de_Chaplin", icon_url="https://avatars.githubusercontent.com/u/85872356?v=4")
+
+        return embed
 
 
 def get_guilds():
@@ -145,6 +213,11 @@ def get_guilds():
     except:
         print ("Error getting guilds")
         return "0"
+
+
+# ======================================================================================================================
+# Loop Events
+# ======================================================================================================================
 
 
 @tasks.loop(seconds=1)
@@ -174,8 +247,33 @@ async def check_vac():
             if user is not None:
                 msg = vacChecker.check_all(KEY, str(row[0]))
                 if msg is not None:
-                    await user.send(msg)
+
+                    steamID, name, game_banned, game_bans, vac_banned, vac_bans = vacChecker.check_all(KEY, str(row[0]))
+
+                    embed = create_embed("Profile Status", "The current status of " + name,
+                                         get_random_colour(), [
+                                             ("Name - ", name, False),
+                                             ("Steam ID - ", steamID, False),
+                                             ("Game Banned - ", game_banned, False),
+                                             ("Game Bans - ", game_bans, False),
+                                             ("VAC Banned - ", vac_banned, False),
+                                             ("VAC Bans - ", vac_bans, False)
+                                         ])
+
+                    await user.send(embed=embed)
+
+                    #await user.send(msg)
             else:
                 print(f"User with ID {str(row[0])} not found.")
+
+
+# ======================================================================================================================
+# Random functions
+# ======================================================================================================================
+
+# Function to randomly select a colour for the embed
+def get_random_colour():
+    return random.choice(color_codes)
+
 
 client.run(TOKEN)
