@@ -88,4 +88,7 @@ def get_num_guilds():
     row = c.fetchone()
     conn.close()
 
-    return row[0]
+    if row is not None:
+        return row[0]
+    else:
+        return 0

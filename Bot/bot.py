@@ -34,6 +34,7 @@ KEY = os.getenv('KEY')
 # Remove the default help command
 client.remove_command('help')
 
+
 # ======================================================================================================================
 # Standard Events
 # ======================================================================================================================
@@ -65,6 +66,10 @@ async def on_guild_remove(guild):
 # On message
 @client.event
 async def on_message(message):
+
+    if not guild_database.check_guild(message.guild.id):
+        guild_database.add_guild(message.guild.id, DEFAULT_PREFIX)
+
     mention = f'<@{client.user.id}>'
     if message.content == mention:
         await message.channel.send("My prefix is " + guild_database.get_prefix(message.guild.id))
@@ -126,9 +131,22 @@ async def help(ctx):
                    )
 
 
+def get_guilds():
+    try:
+        guilds = guild_database.get_num_guilds()
+        if guilds >= 1:
+            return guilds
+        else:
+            return "0"
+    except:
+        print ("Error getting guilds")
+        return "0"
+
+
 # Looping through the status
-status = cycle(["your steam accounts!", " who gets banned!", " you 👀", " people get banned", str(guild_database.get_num_guilds()) + " servers!"])
-status2 = ["your steam accounts!", " who gets banned!", " you 👀", " people get banned", str(guild_database.get_num_guilds()) + " servers!"]
+#status = cycle(["your steam accounts!", " who gets banned!", " you 👀", " people get banned", str(get_guilds()) + " servers!"])
+status2 = ["your steam accounts!", " who gets banned!", " you 👀", " people get banned", str(get_guilds()) + " servers!"]
+
 
 @tasks.loop(seconds=1)
 async def change_status():
