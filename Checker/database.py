@@ -32,7 +32,8 @@ def add_account(steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_v
     else:
         conn = sqlite3.connect(DATABASE)
         c = conn.cursor()
-        c.execute("INSERT INTO accounts VALUES (?, ?, ?, ?, ?, ?, ?)", (steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans, discord_id))
+        c.execute("INSERT INTO accounts VALUES (?, ?, ?, ?, ?, ?, ?)", (steam_id, steam_name, game_bans, num_game_bans,
+                                                                        steam_vac, num_vac_bans, discord_id))
         conn.commit()
         conn.close()
 
@@ -66,11 +67,11 @@ def get_accounts():
 
 
 # Update the status of a steam account
-def update_status(steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans):
+def update_status(steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans, discord_id):
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
-    c.execute("UPDATE accounts SET steam_name=?, game_bans=?, num_game_bans=?, steam_vac=?, num_vac_bans=? "
-              "WHERE steam_id=?", (steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans, steam_id))
+    c.execute("UPDATE accounts SET steam_name=?, game_bans=?, num_game_bans=?, steam_vac=?, num_vac_bans=?, discord_id=?"
+              "WHERE steam_id=?", (steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans, discord_id, steam_id))
     conn.commit()
     conn.close()
 
@@ -128,6 +129,48 @@ def get_steamid_from_discord(discord_id):
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
     c.execute("SELECT steam_id FROM accounts WHERE discord_id=?", (discord_id,))
+    rows = c.fetchall()
+    conn.close()
+
+    if rows:
+        return [i[0] for i in rows]
+    else:
+        return None
+
+
+# Get discord_id from steam_id
+def get_discord_id(steam_id):
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    c.execute("SELECT discord_id FROM accounts WHERE steam_id=?", (steam_id,))
+    row = c.fetchone()
+    conn.close()
+
+    if row:
+        return row[0]
+    else:
+        return None
+
+
+# Get the number of accounts per discord_id
+def get_num_accounts():
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    c.execute("SELECT discord_id, COUNT(*) FROM accounts GROUP BY discord_id")
+    rows = c.fetchall()
+    conn.close()
+
+    if rows:
+        return rows
+    else:
+        return None
+
+
+# Get every unique discord_id
+def get_discord_id_list():
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    c.execute("SELECT DISTINCT discord_id FROM accounts")
     rows = c.fetchall()
     conn.close()
 
