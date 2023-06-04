@@ -45,6 +45,7 @@ async def on_ready():
     vacChecker.start_up()
     print('Bot is ready!')
     change_status.start()
+    check_vac.start()
 
     guild_database.create_database()
 
@@ -66,6 +67,8 @@ async def on_guild_remove(guild):
 # On message
 @client.event
 async def on_message(message):
+    if message.author == client.user:
+        return
 
     if not guild_database.check_guild(message.guild.id):
         guild_database.add_guild(message.guild.id, DEFAULT_PREFIX)
@@ -106,13 +109,14 @@ async def checkPrefix(ctx):
 # Command to check the status of a steam account
 @client.command()
 async def status(ctx, steam_id):
-    await ctx.send(vacChecker.check_vac(KEY, steam_id))
+    await ctx.send(vacChecker.check_vac(KEY, steam_id, ctx.message.author.id))
 
 
 # Command to add a steam account to the database
 @client.command()
 async def add(ctx, steam_id):
-    await ctx.send("This command is not yet implemented!")
+    name = vacChecker.add_account(KEY, steam_id, ctx.message.author.id)
+    await ctx.send(f"{name} added to database!")
 
 
 # Command to remove a steam account from the database
@@ -143,16 +147,35 @@ def get_guilds():
         return "0"
 
 
-# Looping through the status
-#status = cycle(["your steam accounts!", " who gets banned!", " you 👀", " people get banned", str(get_guilds()) + " servers!"])
-status2 = ["your steam accounts!", " who gets banned!", " you 👀", " people get banned", str(get_guilds()) + " servers!"]
-
-
 @tasks.loop(seconds=1)
 async def change_status():
+    status2 = ["your steam accounts!", " who gets banned!", " you 👀", " people get banned",
+               str(get_guilds()) + " servers!"]
+
     await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=(random.choice(status2))))
-    #await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=(next(status))))
     await asyncio.sleep(3)
 
+
+# Loop to check for vac bans on all accounts every hour
+@tasks.loop(minutes=60)
+async def check_vac():
+
+    # Get list of user ids from database
+    # iterate through list to check all accounts belonging to user
+    # send private message to user
+
+    # Will run for the number of unique discord ids in the database
+
+    discord_ids = vacChecker.get_discord_id()
+
+    if discord_ids:
+        for row in discord_ids:
+            user = client.get_user(int(row[0]))
+            if user is not None:
+                msg = vacChecker.check_all(KEY, str(row[0]))
+                if msg is not None:
+                    await user.send(msg)
+            else:
+                print(f"User with ID {str(row[0])} not found.")
 
 client.run(TOKEN)

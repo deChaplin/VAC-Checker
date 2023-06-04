@@ -1,6 +1,6 @@
 import sqlite3
 
-DATABASE = 'guilds.db'
+DATABASE = 'database.db'
 
 
 def create_database():
