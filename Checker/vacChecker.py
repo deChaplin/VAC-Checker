@@ -9,9 +9,58 @@ def start_up():
     database.create_database()
 
 
-def check_vac(KEY, account):
-    response = format_api_response(KEY, account, api.getBannedStatus(KEY, account))
-    return response
+def check_vac(KEY, account, discord_id):
+    steamID, name, game_banned, game_bans, vac_banned, vac_bans = format_api_response(KEY, account, api.getBannedStatus(KEY, account))
+
+    # Add the account to the database
+    database.add_account(steamID, name, game_banned, game_bans, vac_banned, vac_bans, discord_id)
+
+    message = ""
+    message += "---------------------------------------\n" + \
+                "Steam Name: " + name + "\n" + \
+                "Steam ID: " + steamID + "\n" + \
+                "Game Banned: " + game_banned + "\n" + \
+                "Number of Game Bans: " + game_bans + "\n" + \
+                "VAC Banned: " + vac_banned + "\n" + \
+                "Number of VAC Bans: " + vac_bans + "\n" + \
+                "---------------------------------------\n"
+
+    return message
+
+
+def get_discord_id():
+    # Returns the number of discord IDs in the database
+    return database.get_num_discord_id()
+
+
+def check_all(KEY, discord_id):
+    accounts = database.get_steamid_from_discord(discord_id)
+
+    print("Discord Id - " + discord_id)
+    message = ""
+    for i in accounts:
+        print("Steam Id - " + i)
+        steamID, name, game_banned, game_bans, vac_banned, vac_bans = format_api_response(KEY, i, api.getBannedStatus(KEY, i))
+
+        if game_banned == "Yes" or vac_banned == "Yes":
+            message += "---------------------------------------\n" + \
+            "Steam Name: " + name + "\n" + \
+            "Steam ID: " + steamID + "\n" + \
+            "Game Banned: " + game_banned + "\n" + \
+            "Number of Game Bans: " + game_bans + "\n" + \
+            "VAC Banned: " + vac_banned + "\n" + \
+            "Number of VAC Bans: " + vac_bans + "\n" + \
+            "---------------------------------------\n"
+
+            return message
+        else:
+            return None
+
+
+def add_account(KEY, account, discord_id):
+    steamID, name, game_banned, game_bans, vac_banned, vac_bans = format_api_response(KEY, account, api.getBannedStatus(KEY, account))
+    database.add_account(steamID, name, game_banned, game_bans, vac_banned, vac_bans, discord_id)
+    return name
 
 
 def format_api_response(KEY, account, response):
@@ -41,22 +90,7 @@ def format_api_response(KEY, account, response):
         else:
             vac_banned = "No"
 
-        # Add the account to the database
-        add_account(i.SteamId, name, game_banned, i.NumberOfGameBans, vac_banned, i.NumberOfVACBans)
-
-        # Print the account details
-        return "---------------------------------------\n" + \
-        "Steam Name: " + name + "\n" + \
-        "Steam ID: " + i.SteamId + "\n" + \
-        "Game Banned: " + game_banned + "\n" + \
-        "Number of Game Bans: " + str(i.NumberOfGameBans) + "\n" + \
-        "VAC Banned: " + vac_banned + "\n" + \
-        "Number of VAC Bans: " + str(i.NumberOfVACBans) + "\n" + \
-        "---------------------------------------\n"
-
-
-def add_account(steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans):
-    database.add_account(steam_id, steam_name, game_bans, num_game_bans, steam_vac, num_vac_bans)
+        return i.SteamId, name, game_banned, str(i.NumberOfGameBans), vac_banned, str(i.NumberOfVACBans)
 
 
 def remove_account(steam_id):
