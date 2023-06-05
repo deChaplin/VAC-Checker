@@ -194,7 +194,6 @@ async def remove(ctx, steam_id):
     else:
         await ctx.send("Only the person who added the account can remove it!")
 
-
 # ======================================================================================================================
 # Loop Events
 # ======================================================================================================================
@@ -234,17 +233,18 @@ async def check_vac():
                 if game_banned == "Yes" or vac_banned == "Yes":
                     embed = create_embed("Profile Status", "The current status of " + name,
                                          get_random_colour(), [
-                                            ("Name - ", name, False),
-                                            ("Steam ID - ", steamID, False),
-                                            ("Game Banned - ", game_banned, False),
-                                            ("Game Bans - ", game_bans, False),
-                                            ("VAC Banned - ", vac_banned, False),
-                                            ("VAC Bans - ", vac_bans, False),
-                                            ("Last Ban - ", get_days_since_ban(last_ban), False)
+                                             ("Name - ", name, False),
+                                             ("Steam ID - ", steamID, False),
+                                             ("Game Banned - ", game_banned, False),
+                                             ("Game Bans - ", game_bans, False),
+                                             ("VAC Banned - ", vac_banned, False),
+                                             ("VAC Bans - ", vac_bans, False),
+                                             ("Last Ban - ", get_days_since_ban(last_ban), False)
                                          ])
                     await user.send(embed=embed)
-            else:
-                print(f"User with ID {str(id)} not found.")
+                    vacChecker.remove_account(steamID, int(id))
+    else:
+        print(f"User with ID {str(id)} not found.")
 
 
 # ======================================================================================================================
